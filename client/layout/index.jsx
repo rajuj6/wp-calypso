@@ -33,6 +33,7 @@ import PulsingDot from 'components/pulsing-dot';
 import SitesListNotices from 'lib/sites-list/notices';
 import OfflineStatus from 'layout/offline-status';
 import QueryPreferences from 'components/data/query-preferences';
+import TracksOptOut from 'layout/tracks-opt-out';
 
 /**
  * Internal dependencies
@@ -186,6 +187,7 @@ const Layout = createReactClass( {
 					isEnabled={ translator.isEnabled() }
 					isActive={ translator.isActivated() }
 				/>
+				<TracksOptOut />
 				{ this.renderPreview() }
 				{ config.isEnabled( 'happychat' ) &&
 					this.props.chatIsOpen && <AsyncLoad require="components/happychat" /> }

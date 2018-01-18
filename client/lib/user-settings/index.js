@@ -231,6 +231,22 @@ UserSettings.prototype.isPendingEmailChange = function() {
 };
 
 /**
+ * Returns true if we're sending tracks event.
+ *
+ * NOTE: Defaults to true if settings are loaded OR the settings isn't found
+ *
+ * @return {Boolean} are we sending tracks events?
+ */
+UserSettings.prototype.isSendingTracksEvents = function() {
+	if ( ! this.settings ) {
+		return true;
+	}
+
+	const currentValue = this.getSetting( 'is_sending_tracks_events' );
+	return currentValue !== null ? currentValue : true;
+};
+
+/**
  * Given a settingName, returns that setting if it exists or null
  *
  * @param {String}  settingName - setting name

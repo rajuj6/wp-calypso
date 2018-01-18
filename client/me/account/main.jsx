@@ -34,6 +34,7 @@ import FormButton from 'components/forms/form-button';
 import FormButtonsBar from 'components/forms/form-buttons-bar';
 import FormSectionHeading from 'components/forms/form-section-heading';
 import FormRadio from 'components/forms/form-radio';
+import FormToggle from 'components/forms/form-toggle';
 import { recordTracksEvent } from 'state/analytics/actions';
 import ReauthRequired from 'me/reauth-required';
 import twoStepAuthorization from 'lib/two-step-authorization';
@@ -51,6 +52,7 @@ import _user from 'lib/user';
 
 const user = _user();
 const colorSchemeKey = 'calypso_preferences.colorScheme';
+const isSendingTracksEventsKey = 'is_sending_tracks_events';
 
 /**
  * Debug instance
@@ -118,6 +120,10 @@ const Account = createReactClass( {
 
 		this.props.recordTracksEvent( 'calypso_color_schemes_select', { colorScheme } );
 		this.updateUserSetting( colorSchemeKey, colorScheme );
+	},
+
+	updateIsSendingTracksEvents( isSendingTracksEvents ) {
+		this.updateUserSetting( isSendingTracksEventsKey, isSendingTracksEvents );
 	},
 
 	getEmailAddress() {
@@ -554,6 +560,18 @@ const Account = createReactClass( {
 							<ColorSchemePicker temporarySelection onSelection={ this.updateColorScheme } />
 						</FormFieldset>
 					) }
+
+				<FormFieldset>
+					<FormLabel htmlFor="">{ translate( 'Usage Statistics' ) }</FormLabel>
+					<FormToggle
+						disabled={ this.getDisabledState() }
+						id={ isSendingTracksEventsKey }
+						checked={ userSettings.isSendingTracksEvents() }
+						onChange={ this.updateIsSendingTracksEvents }
+					>
+						{ translate( 'Send usage statistics to help us improve our products.' ) }
+					</FormToggle>
+				</FormFieldset>
 
 				{ this.renderHolidaySnow() }
 
