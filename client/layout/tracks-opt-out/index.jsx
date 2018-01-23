@@ -4,12 +4,15 @@
  * External dependencies
  */
 import debug from 'debug';
+import PropTypes from 'prop-types';
 import React from 'react';
+import { connect } from 'react-redux';
 import { get, isFunction } from 'lodash';
 
 /**
  * Internal dependencies
  */
+import { toggleTracksOptOut } from 'state/analytics/actions';
 import userSettings from 'lib/user-settings';
 
 /**
@@ -19,6 +22,10 @@ import userSettings from 'lib/user-settings';
 const tracksDebug = debug( 'calypso:analytics:tracks' );
 
 class TracksOptOut extends React.PureComponent {
+	static propTypes = {
+		toggleTracksOptOut: PropTypes.func.isRequired,
+	};
+
 	componentDidMount() {
 		userSettings.on( 'change', this.userSettingsChanged );
 
@@ -36,6 +43,7 @@ class TracksOptOut extends React.PureComponent {
 		if ( isFunction( optOutIframeWindow.postMessage ) ) {
 			tracksDebug( `opt-out iframe avaialble, setting status: \`${ isSendingTracksEvents }\`` );
 			optOutIframeWindow.postMessage( isSendingTracksEvents, '*' );
+			this.props.toggleTracksOptOut( ! isSendingTracksEvents );
 		} else {
 			tracksDebug(
 				`opt-out iframe not avaialble, bailing out from setting status: \`${ isSendingTracksEvents }\``
@@ -64,4 +72,4 @@ class TracksOptOut extends React.PureComponent {
 /**
  * Exports
  */
-export default TracksOptOut;
+export default connect( null, { toggleTracksOptOut } )( TracksOptOut );
