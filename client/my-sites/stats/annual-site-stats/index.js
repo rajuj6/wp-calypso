@@ -122,14 +122,14 @@ class AnnualSiteStats extends Component {
 	getStrings() {
 		const { translate } = this.props;
 		return {
-			year: translate( 'year' ),
-			total_posts: translate( 'total posts' ),
-			total_comments: translate( 'total comments' ),
-			avg_comments: translate( 'avg comments per post' ),
-			total_likes: translate( 'total likes' ),
-			avg_likes: translate( 'avg likes per post' ),
-			total_words: translate( 'total words' ),
-			avg_words: translate( 'avg words per post' ),
+			year: translate( 'Year' ),
+			total_posts: translate( 'Total Posts' ),
+			total_comments: translate( 'Total Comments' ),
+			avg_comments: translate( 'Avg Comments per Post' ),
+			total_likes: translate( 'Total Likes' ),
+			avg_likes: translate( 'Avg Likes per Post' ),
+			total_words: translate( 'Total Words' ),
+			avg_words: translate( 'Avg Words per Post' ),
 		};
 	}
 
