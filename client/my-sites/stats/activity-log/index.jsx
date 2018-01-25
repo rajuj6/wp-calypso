@@ -252,6 +252,19 @@ class ActivityLog extends Component {
 		}
 	};
 
+	dismissRewind = () => {
+		const { dismissedRewinds } = this.state;
+		const { rewindState: { rewind: { rewindId } = {} } = {} } = this.props;
+
+		if ( ! rewindId ) {
+			return;
+		}
+
+		this.setState( {
+			dismissedRewinds: union( dismissedRewinds, [ rewindId ] ),
+		} );
+	};
+
 	/**
 	 * Adjust a moment by the site timezone or gmt offset. Use the resulting function wherever log
 	 * times need to be formatted for display to ensure all times are displayed as site times.
@@ -526,7 +539,7 @@ class ActivityLog extends Component {
 							requestedRestoreId={ currentRewind.rewindId }
 							failureReason={ currentRewind.reason }
 							rewindRestore={ this.props.rewindRestore }
-							closeDialog={ this.handleCloseDialog }
+							closeDialog={ this.dismissRewind }
 							siteId={ siteId }
 							siteTitle={ siteTitle }
 							timestamp={ currentRewind.startedAt.toISOString() }
