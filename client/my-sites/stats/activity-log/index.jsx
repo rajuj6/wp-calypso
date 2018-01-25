@@ -8,7 +8,7 @@ import PropTypes from 'prop-types';
 import scrollTo from 'lib/scroll-to';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
-import { first, get, groupBy, includes, isEmpty, isNull, last, range, sortBy } from 'lodash';
+import { first, get, groupBy, includes, isEmpty, isNull, last, range, sortBy, union } from 'lodash';
 
 /**
  * Internal dependencies
@@ -52,7 +52,6 @@ import {
 	getRequest,
 	getRequestedBackup,
 	getRequestedRewind,
-	getRestoreProgress,
 	getRewindState,
 	getSiteGmtOffset,
 	getSiteTimezoneValue,
@@ -184,26 +183,6 @@ const intoVisualGroups = ( ...args ) => visualGroups( logsByDay( ...args ) ).rev
 
 class ActivityLog extends Component {
 	static propTypes = {
-		restoreProgress: PropTypes.shape( {
-			errorCode: PropTypes.string.isRequired,
-			failureReason: PropTypes.string.isRequired,
-			message: PropTypes.string.isRequired,
-			percent: PropTypes.number.isRequired,
-			restoreId: PropTypes.number,
-			status: PropTypes.oneOf( [
-				'finished',
-				'queued',
-				'running',
-
-				// These are other VP restore statuses.
-				// We should _never_ see them for Activity Log rewinds
-				// 'aborted',
-				// 'fail',
-				// 'success',
-				// 'success-with-errors',
-			] ).isRequired,
-			rewindId: PropTypes.string.isRequired,
-		} ),
 		backupProgress: PropTypes.object,
 		changePeriod: PropTypes.func,
 		requestedRestore: PropTypes.shape( {
@@ -222,6 +201,22 @@ class ActivityLog extends Component {
 		moment: PropTypes.func.isRequired,
 		translate: PropTypes.func.isRequired,
 	};
+
+	state = {
+		dismissedRewinds: [],
+	};
+
+	componentWillMount() {
+		const { rewindState: { rewind: { rewindId, status } = {} } } = this.props;
+
+		// don't show a completed rewind if it was here when
+		// we started, otherwise we'll hide them via the dialog
+		if ( 'failed' === status || 'finished' === status ) {
+			this.setState( {
+				dismissedRewinds: union( this.state.dismissedRewinds, [ rewindId ] ),
+			} );
+		}
+	}
 
 	componentDidMount() {
 		window.scrollTo( 0, 0 );
@@ -274,37 +269,27 @@ class ActivityLog extends Component {
 	 *
 	 * @returns {object} Component showing progress.
 	 */
-	renderActionProgress() {
-		const { siteId, restoreProgress, backupProgress } = this.props;
+	renderBackupDialogs() {
+		const { siteId, backupProgress } = this.props;
 
-		if ( ! restoreProgress && ! backupProgress ) {
+		if ( ! backupProgress ) {
 			return null;
 		}
 
-		const cards = [];
-
-		if ( !! restoreProgress ) {
-			cards.push(
-				'finished' === restoreProgress.status
-					? this.getEndBanner( siteId, restoreProgress )
-					: this.getProgressBanner( siteId, restoreProgress, 'restore' )
-			);
+		if ( 0 <= backupProgress.progress ) {
+			return this.getProgressBanner( siteId, backupProgress, 'backup' );
 		}
 
-		if ( !! backupProgress ) {
-			if ( 0 <= backupProgress.progress ) {
-				cards.push( this.getProgressBanner( siteId, backupProgress, 'backup' ) );
-			} else if (
-				! isEmpty( backupProgress.url ) &&
-				Date.now() < Date.parse( backupProgress.validUntil )
-			) {
-				cards.push( this.getEndBanner( siteId, backupProgress ) );
-			} else if ( ! isEmpty( backupProgress.backupError ) ) {
-				cards.push( this.getEndBanner( siteId, backupProgress ) );
-			}
+		const now = Date.now();
+		const backupExpiration = Date.parse( backupProgress.validUntil );
+
+		if ( ! isEmpty( backupProgress.url ) && now < backupExpiration ) {
+			return this.getEndBanner( siteId, backupProgress );
 		}
 
-		return cards;
+		if ( ! isEmpty( backupProgress.backupError ) ) {
+			return this.getEndBanner( siteId, backupProgress );
+		}
 	}
 
 	/**
@@ -434,6 +419,7 @@ class ActivityLog extends Component {
 	}
 
 	render() {
+		const { dismissedRewinds } = this.state;
 		const {
 			canViewActivityLog,
 			logRequestQuery,
@@ -442,9 +428,12 @@ class ActivityLog extends Component {
 			requestData,
 			rewindState,
 			siteId,
+			siteTitle,
 			slug,
 			translate,
 		} = this.props;
+
+		const { rewind: currentRewind = {} } = rewindState;
 
 		if ( false === canViewActivityLog ) {
 			return (
@@ -459,9 +448,10 @@ class ActivityLog extends Component {
 		}
 
 		const disableRestore =
-			includes( [ 'queued', 'running' ], get( this.props, [ 'restoreProgress', 'status' ] ) ) ||
+			( rewindState.rewind && rewindState.rewind.status === 'running' ) ||
 			'active' !== rewindState.state;
 		const disableBackup = 0 <= get( this.props, [ 'backupProgress', 'progress' ], -Infinity );
+		const rewindIsDismissed = includes( dismissedRewinds, currentRewind.rewindId );
 
 		const today = moment()
 			.utc()
@@ -517,7 +507,41 @@ class ActivityLog extends Component {
 				) }
 				{ this.renderErrorMessage() }
 				{ 'active' === rewindState.state && this.renderMonthNavigation() }
-				{ this.renderActionProgress() }
+				{ currentRewind.status === 'running' && (
+					<ProgressBanner
+						key="current-running-rewind"
+						applySiteOffset={ this.applySiteOffset }
+						percent={ currentRewind.progress }
+						restoreId={ currentRewind.rewindId }
+						siteId={ siteId }
+						status="running"
+						timestamp={ currentRewind.startedAt.toISOString() }
+						action="restore"
+					/>
+				) }
+				{ ! rewindIsDismissed &&
+					currentRewind.status === 'failed' && (
+						<ErrorBanner
+							key="last-rewind-failed"
+							requestedRestoreId={ currentRewind.rewindId }
+							failureReason={ currentRewind.reason }
+							rewindRestore={ this.props.rewindRestore }
+							closeDialog={ this.handleCloseDialog }
+							siteId={ siteId }
+							siteTitle={ siteTitle }
+							timestamp={ currentRewind.startedAt.toISOString() }
+						/>
+					) }
+				{ ! rewindIsDismissed &&
+					currentRewind.status === 'finished' && (
+						<SuccessBanner
+							key="last-rewind-finished"
+							applySiteOffset={ this.applySiteOffset }
+							siteId={ siteId }
+							timestamp={ currentRewind.rewindId }
+						/>
+					) }
+				{ this.renderBackupDialogs() }
 				{ isEmpty( logs ) ? (
 					noLogsContent
 				) : (
@@ -607,7 +631,6 @@ export default connect(
 			requestedRestoreId,
 			requestedBackup: getActivityLog( state, siteId, requestedBackupId ),
 			requestedBackupId,
-			restoreProgress: getRestoreProgress( state, siteId ),
 			backupProgress: getBackupProgress( state, siteId ),
 			requestData: { logs: getRequest( state, activityLogRequest( siteId, logRequestQuery ) ) },
 			rewindState: getRewindState( state, siteId ),
