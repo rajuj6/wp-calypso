@@ -525,6 +525,13 @@ module.exports = function() {
 		} );
 	} );
 
+	app.get( '/support-user', function( req, res ) {
+		res.render( 'support-user', {
+			supportUser: req.query.support_user,
+			supportToken: req.query._support_token,
+		} );
+	} );
+
 	// catchall to render 404 for all routes not whitelisted in client/sections
 	app.use( render404 );
 

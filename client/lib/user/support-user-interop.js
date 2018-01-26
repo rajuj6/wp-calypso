@@ -28,8 +28,8 @@ import localStorageBypass from 'lib/support/support-user/localstorage-bypass';
 
 const debug = debugModule( 'calypso:support-user' );
 const STORAGE_KEY = 'boot_support_user';
-export const USER_PARAM = 'support_user';
-export const TOKEN_PARAM = '_support_token';
+const USER_PARAM = 'support_user';
+const TOKEN_PARAM = '_support_token';
 
 export const isEnabled = () => config.isEnabled( 'support-user' );
 
@@ -44,7 +44,7 @@ const reduxStoreReady = new Promise( resolve => {
 export const setReduxStore = _setReduxStore;
 
 // Get the value of the `?support_user=` query param
-export const getQueryParameter = param => {
+const getQueryParameter = param => {
 	const queryString = get( window, 'location.search', null );
 
 	if ( ! queryString ) {
@@ -91,7 +91,7 @@ export const isSupportUserSession = () => _isSupportUserSession;
 
 let onBeforeUnload;
 
-export const storeUserAndToken = ( user, token ) => () => {
+const storeUserAndToken = ( user, token ) => () => {
 	if ( ! isEnabled() ) {
 		return;
 	}

@@ -42,7 +42,7 @@ let KeyboardShortcutsMenu, SupportUser;
 import PropTypes from 'prop-types';
 import QuerySites from 'components/data/query-sites';
 import { isOffline } from 'state/application/selectors';
-import { getSectionName, hasSidebar, masterbarIsVisible } from 'state/ui/selectors';
+import { hasSidebar, masterbarIsVisible } from 'state/ui/selectors';
 import isHappychatOpen from 'state/happychat/selectors/is-happychat-open';
 import SitePreview from 'blocks/site-preview';
 import { getCurrentLayoutFocus } from 'state/ui/layout-focus/selectors';
@@ -140,10 +140,6 @@ const Layout = createReactClass( {
 	},
 
 	render: function() {
-		if ( this.props.sectionName === 'support-user' ) {
-			return null;
-		}
-
 		const sectionClass = classnames(
 				'layout',
 				'color-scheme',
@@ -221,6 +217,5 @@ export default connect( state => {
 		currentLayoutFocus: getCurrentLayoutFocus( state ),
 		chatIsOpen: isHappychatOpen( state ),
 		colorSchemePreference: getPreference( state, 'colorScheme' ),
-		sectionName: getSectionName( state ),
 	};
 } )( Layout );

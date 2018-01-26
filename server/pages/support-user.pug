@@ -1,0 +1,20 @@
+doctype html
+
+html
+    head
+        script.
+            const user="#{supportUser}";
+            const token="#{supportToken}";
+
+            window.sessionStorage.setItem( 'boot_support_user', JSON.stringify( { user, token } ) );
+
+            const url = window.location.toString();
+
+            if ( url.indexOf( '?' ) > 0 ) {
+                const cleanUrl = url.substring( 0, url.indexOf( '?' ) );
+                window.history.replaceState( {}, document.title, cleanUrl );
+            }
+
+            window.location.replace( 'http://calypso.localhost:3000' );
+
+body
